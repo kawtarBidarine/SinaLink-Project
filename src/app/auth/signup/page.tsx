@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Stethoscope, Heart } from "lucide-react";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -16,6 +18,13 @@ export default function SignupPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Pre-select role from URL param (?role=doctor or ?role=patient)
+  useEffect(() => {
+    const roleParam = searchParams.get("role");
+    if (roleParam === "doctor") setForm((f) => ({ ...f, role: "DOCTOR" }));
+    if (roleParam === "patient") setForm((f) => ({ ...f, role: "PATIENT" }));
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +38,6 @@ export default function SignupPage() {
     });
 
     const data = await res.json();
-
     if (!res.ok) {
       setError(data.error ?? "Something went wrong.");
       setLoading(false);
@@ -42,36 +50,66 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
+        {/* Logo */}
+        <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-600" />
+            <div className="w-7 h-7 rounded-lg bg-teal-700 flex items-center justify-center">
+              <Stethoscope size={14} className="text-white" />
+            </div>
             <span className="font-serif text-2xl text-teal-900">SinaLink</span>
           </div>
           <p className="text-stone-400 text-sm">Create your account</p>
         </div>
 
-        {/* Role selector */}
-        <div className="flex rounded-xl overflow-hidden border border-stone-200 mb-6">
-          {(["PATIENT", "DOCTOR"] as const).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, role: r }))}
-              className={`flex-1 py-2.5 text-sm transition-colors ${
-                form.role === r
-                  ? "bg-teal-700 text-white font-medium"
-                  : "text-stone-500 hover:bg-stone-50"
-              }`}
-            >
-              {r === "PATIENT" ? "I am a Patient" : "I am a Doctor"}
-            </button>
-          ))}
+        {/* Role selector — visually distinct */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, role: "PATIENT" }))}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+              form.role === "PATIENT"
+                ? "border-teal-600 bg-teal-50 text-teal-800"
+                : "border-stone-200 bg-white text-stone-500 hover:border-stone-300"
+            }`}
+          >
+            <Heart size={20} className={form.role === "PATIENT" ? "text-teal-600" : "text-stone-400"} />
+            <div className="text-center">
+              <p className="text-sm font-medium">I need care</p>
+              <p className="text-xs opacity-70">Patient</p>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, role: "DOCTOR" }))}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+              form.role === "DOCTOR"
+                ? "border-teal-600 bg-teal-50 text-teal-800"
+                : "border-stone-200 bg-white text-stone-500 hover:border-stone-300"
+            }`}
+          >
+            <Stethoscope size={20} className={form.role === "DOCTOR" ? "text-teal-600" : "text-stone-400"} />
+            <div className="text-center">
+              <p className="text-sm font-medium">I provide care</p>
+              <p className="text-xs opacity-70">Doctor</p>
+            </div>
+          </button>
+        </div>
+
+        {/* Context message */}
+        <div className={`text-xs px-4 py-3 rounded-lg mb-5 ${
+          form.role === "DOCTOR"
+            ? "bg-teal-50 text-teal-700 border border-teal-100"
+            : "bg-blue-50 text-blue-700 border border-blue-100"
+        }`}>
+          {form.role === "DOCTOR"
+            ? "You'll get access to the clinical dashboard — schedule, patient list, and consultation tools."
+            : "You'll be able to search doctors, book appointments, and access your records."}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {(
             [
-              { label: "Full Name", field: "name", type: "text", placeholder: "Dr. Amine Karim" },
+              { label: "Full Name", field: "name", type: "text", placeholder: form.role === "DOCTOR" ? "Dr. Amine Karim" : "Layla Bensaid" },
               { label: "Email", field: "email", type: "email", placeholder: "you@example.com" },
               { label: "Password", field: "password", type: "password", placeholder: "Min 8 characters" },
             ] as { label: string; field: keyof typeof form; type: string; placeholder: string }[]
@@ -127,17 +165,23 @@ export default function SignupPage() {
             disabled={loading}
             className="w-full bg-teal-700 text-white py-3 rounded-xl text-sm font-medium hover:bg-teal-800 disabled:opacity-50 transition-colors"
           >
-            {loading ? "Creating account..." : "Create account"}
+            {loading ? "Creating account..." : form.role === "DOCTOR" ? "Create doctor account" : "Create patient account"}
           </button>
         </form>
 
         <p className="text-center text-sm text-stone-400 mt-6">
           Already have an account?{" "}
-          <Link href="/auth/login" className="text-teal-700 hover:text-teal-900 font-medium">
-            Sign in
-          </Link>
+          <Link href="/auth/login" className="text-teal-700 hover:text-teal-900 font-medium">Sign in</Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }
