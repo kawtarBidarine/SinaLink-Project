@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { UserAvatar } from "./UserAvatar";
 import { cn } from "@/lib/utils";
 
@@ -19,17 +19,21 @@ const PATIENT_LINKS = [
 
 interface NavbarProps {
   currentPath?: string;
+  session?: {
+    user?: {
+      name?: string | null;
+      role?: string;
+    };
+  } | null;
 }
 
-export function Navbar({ currentPath = "" }: NavbarProps) {
-  const { data: session } = useSession();
+export function Navbar({ currentPath = "", session }: NavbarProps) {
   const role = session?.user?.role;
   const links = role === "DOCTOR" ? DOCTOR_LINKS : PATIENT_LINKS;
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-stone-200/80">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-teal-600" />
           <span className="font-serif text-xl text-teal-900 tracking-tight">
@@ -37,7 +41,6 @@ export function Navbar({ currentPath = "" }: NavbarProps) {
           </span>
         </Link>
 
-        {/* Nav links — only shown when authenticated */}
         {session && (
           <div className="flex items-center gap-1">
             {links.map((link) => (
@@ -57,7 +60,6 @@ export function Navbar({ currentPath = "" }: NavbarProps) {
           </div>
         )}
 
-        {/* User area */}
         <div className="flex items-center gap-3">
           {session ? (
             <div className="flex items-center gap-3">
@@ -74,16 +76,10 @@ export function Navbar({ currentPath = "" }: NavbarProps) {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Link
-                href="/auth/login"
-                className="text-sm text-stone-600 hover:text-stone-900 px-3 py-1.5"
-              >
+              <Link href="/auth/login" className="text-sm text-stone-600 hover:text-stone-900 px-3 py-1.5">
                 Sign in
               </Link>
-              <Link
-                href="/auth/signup"
-                className="text-sm bg-teal-700 text-white px-4 py-1.5 rounded-lg hover:bg-teal-800 transition-colors"
-              >
+              <Link href="/auth/signup" className="text-sm bg-teal-700 text-white px-4 py-1.5 rounded-lg hover:bg-teal-800 transition-colors">
                 Get started
               </Link>
             </div>

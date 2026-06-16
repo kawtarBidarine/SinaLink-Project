@@ -3,10 +3,16 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
-  const session = req.auth;
 
+  // Public routes — no auth needed
   const publicPaths = ["/", "/auth/login", "/auth/signup"];
+  
+  // Never intercept NextAuth's own API routes
+  if (pathname.startsWith("/api/auth")) return NextResponse.next();
+  
   if (publicPaths.includes(pathname)) return NextResponse.next();
+
+  const session = req.auth;
 
   if (!session) {
     return NextResponse.redirect(new URL("/auth/login", req.url));

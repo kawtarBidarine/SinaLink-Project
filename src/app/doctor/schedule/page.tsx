@@ -4,10 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/shared/Navbar";
 import { Badge } from "@/components/shared/Badge";
 
+export const revalidate = 30;
+
 function getWeekDates(baseDate: Date): Date[] {
   const start = new Date(baseDate);
   const day = start.getDay();
-  const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+  const diff = start.getDate() - day + (day === 0 ? -6 : 1);
   start.setDate(diff);
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start);
@@ -51,7 +53,7 @@ export default async function SchedulePage() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <Navbar currentPath="/doctor/schedule" />
+      <Navbar currentPath="/doctor/schedule" session={session} />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-8">
@@ -62,11 +64,10 @@ export default async function SchedulePage() {
           </p>
         </div>
 
-        {/* Legend */}
         <div className="flex gap-4 mb-4">
           {[
-            { color: "bg-teal-100 text-teal-800", label: "In-person" },
-            { color: "bg-blue-100 text-blue-800", label: "Telehealth" },
+            { color: "bg-teal-100", label: "In-person" },
+            { color: "bg-blue-100", label: "Telehealth" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2 text-xs text-stone-500">
               <span className={`inline-block w-3 h-3 rounded ${item.color}`} />
@@ -75,12 +76,10 @@ export default async function SchedulePage() {
           ))}
         </div>
 
-        {/* Week calendar grid */}
         <div className="grid grid-cols-7 gap-3">
           {weekDates.map((date, i) => {
             const isToday = date.toDateString() === today.toDateString();
             const dayAppts = apptsByDay.get(date.toDateString()) ?? [];
-
             return (
               <div
                 key={date.toISOString()}
@@ -99,10 +98,8 @@ export default async function SchedulePage() {
                     <a
                       key={appt.id}
                       href={`/doctor/consultation/${appt.id}`}
-                      className={`block px-2 py-1 rounded-md text-xs leading-tight transition-opacity hover:opacity-80 ${
-                        appt.isTelehealth
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-teal-100 text-teal-800"
+                      className={`block px-2 py-1 rounded-md text-xs leading-tight hover:opacity-80 ${
+                        appt.isTelehealth ? "bg-blue-100 text-blue-800" : "bg-teal-100 text-teal-800"
                       }`}
                     >
                       <div className="font-medium">
@@ -117,7 +114,6 @@ export default async function SchedulePage() {
           })}
         </div>
 
-        {/* Upcoming list below */}
         <div className="mt-8 bg-white border border-stone-200 rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-stone-100">
             <h2 className="font-medium text-stone-700 text-sm uppercase tracking-wide">Upcoming Appointments</h2>

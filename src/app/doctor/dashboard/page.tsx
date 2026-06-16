@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/shared/Navbar";
 import { Badge } from "@/components/shared/Badge";
 
+export const revalidate = 30;
+
 export default async function DoctorDashboard() {
   const session = await auth();
   if (!session || session.user?.role !== "DOCTOR") redirect("/auth/login");
@@ -32,10 +34,9 @@ export default async function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <Navbar currentPath="/doctor/dashboard" />
+      <Navbar currentPath="/doctor/dashboard" session={session} />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="font-serif text-3xl text-stone-900">
             Good morning, {session.user?.name?.split(" ")[0]}
@@ -52,7 +53,6 @@ export default async function DoctorDashboard() {
           </p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-8">
           {[
             { label: "Today's Appointments", value: today.length },
@@ -67,7 +67,6 @@ export default async function DoctorDashboard() {
           ))}
         </div>
 
-        {/* Schedule */}
         <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-stone-100">
             <h2 className="font-medium text-stone-700 text-sm uppercase tracking-wide">

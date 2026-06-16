@@ -5,6 +5,8 @@ import { Navbar } from "@/components/shared/Navbar";
 import { Badge } from "@/components/shared/Badge";
 import { StatusTracker } from "@/components/features/StatusTracker";
 
+export const revalidate = 30;
+
 export default async function PatientDashboard() {
   const session = await auth();
   if (!session || session.user?.role !== "PATIENT") redirect("/auth/login");
@@ -27,7 +29,7 @@ export default async function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <Navbar currentPath="/patient/dashboard" />
+      <Navbar currentPath="/patient/dashboard" session={session} />
 
       <main className="max-w-5xl mx-auto px-6 py-8">
         <div className="mb-8">
@@ -37,7 +39,6 @@ export default async function PatientDashboard() {
           <p className="text-stone-500 mt-1">Your health, at a glance</p>
         </div>
 
-        {/* Live status tracker — shows only if there's an upcoming appointment today */}
         {nextAppt && (
           <StatusTracker
             patientId={patient.id}
@@ -45,7 +46,6 @@ export default async function PatientDashboard() {
           />
         )}
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white border border-stone-200 rounded-xl p-5">
             <p className="text-xs text-stone-400 uppercase tracking-wider mb-2">Next Appointment</p>
@@ -68,7 +68,6 @@ export default async function PatientDashboard() {
           </div>
         </div>
 
-        {/* Upcoming appointments */}
         <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
             <h2 className="font-medium text-stone-700 text-sm uppercase tracking-wide">Upcoming Appointments</h2>
@@ -104,7 +103,6 @@ export default async function PatientDashboard() {
           </div>
         </div>
 
-        {/* Allergies reminder */}
         {patient.allergies.length > 0 && (
           <div className="bg-red-50 border border-red-100 rounded-xl px-5 py-4 text-sm text-red-800">
             <span className="font-medium">Allergies on record: </span>

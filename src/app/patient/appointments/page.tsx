@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/shared/Navbar";
 import { Badge } from "@/components/shared/Badge";
 
+export const revalidate = 30;
+
 export default async function PatientAppointmentsPage() {
   const session = await auth();
   if (!session || session.user?.role !== "PATIENT") redirect("/auth/login");
@@ -26,7 +28,7 @@ export default async function PatientAppointmentsPage() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <Navbar currentPath="/patient/appointments" />
+      <Navbar currentPath="/patient/appointments" session={session} />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <div className="mb-8">
@@ -34,7 +36,6 @@ export default async function PatientAppointmentsPage() {
           <p className="text-stone-500 mt-1">Your upcoming and past visits</p>
         </div>
 
-        {/* Upcoming */}
         <div className="mb-6">
           <h2 className="text-xs text-stone-400 uppercase tracking-wider mb-3">Upcoming</h2>
           <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
@@ -57,8 +58,8 @@ export default async function PatientAppointmentsPage() {
                         <p className="text-xs text-stone-400 mt-0.5">
                           {new Date(appt.dateTime).toLocaleDateString("en-GB", {
                             weekday: "long", day: "numeric", month: "long",
-                          })}{" "}
-                          at {new Date(appt.dateTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                          })}{" at "}
+                          {new Date(appt.dateTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -84,7 +85,6 @@ export default async function PatientAppointmentsPage() {
           </div>
         </div>
 
-        {/* Past */}
         <div>
           <h2 className="text-xs text-stone-400 uppercase tracking-wider mb-3">Past Visits</h2>
           <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">

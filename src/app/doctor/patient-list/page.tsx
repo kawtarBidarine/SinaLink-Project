@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/shared/Navbar";
 import { Badge } from "@/components/shared/Badge";
 
+export const revalidate = 30;
+
 export default async function PatientListPage() {
   const session = await auth();
   if (!session || session.user?.role !== "DOCTOR") redirect("/auth/login");
@@ -12,11 +14,7 @@ export default async function PatientListPage() {
     where: { userId: session.user.id },
     include: {
       appointments: {
-        include: {
-          patient: {
-            include: { user: true },
-          },
-        },
+        include: { patient: { include: { user: true } } },
         orderBy: { dateTime: "desc" },
       },
     },
@@ -24,18 +22,10 @@ export default async function PatientListPage() {
 
   if (!doctor) redirect("/auth/signup");
 
-  // Deduplicate patients, keeping latest appointment status
-  const patientMap = new Map<
-    string,
-    {
-      id: string;
-      name: string;
-      email: string;
-      lastVisit: Date;
-      lastStatus: string;
-      totalVisits: number;
-    }
-  >();
+  const patientMap = new Map<string, {
+    id: string; name: string; email: string;
+    lastVisit: Date; lastStatus: string; totalVisits: number;
+  }>();
 
   for (const appt of doctor.appointments) {
     const pid = appt.patient.id;
@@ -49,8 +39,7 @@ export default async function PatientListPage() {
         totalVisits: 1,
       });
     } else {
-      const existing = patientMap.get(pid)!;
-      existing.totalVisits += 1;
+      patientMap.get(pid)!.totalVisits += 1;
     }
   }
 
@@ -68,17 +57,14 @@ export default async function PatientListPage() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <Navbar currentPath="/doctor/patient-list" />
+      <Navbar currentPath="/doctor/patient-list" session={session} />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="font-serif text-3xl text-stone-900">Patient List</h1>
-            <p className="text-stone-500 mt-1">{patients.length} registered patients</p>
-          </div>
+        <div className="mb-8">
+          <h1 className="font-serif text-3xl text-stone-900">Patient List</h1>
+          <p className="text-stone-500 mt-1">{patients.length} registered patients</p>
         </div>
 
-        {/* Search bar */}
         <div className="mb-4">
           <input
             type="search"
@@ -87,7 +73,6 @@ export default async function PatientListPage() {
           />
         </div>
 
-        {/* Table */}
         <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
           <table className="w-full">
             <thead>
@@ -103,9 +88,7 @@ export default async function PatientListPage() {
             <tbody className="divide-y divide-stone-50">
               {patients.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-stone-400 py-12 text-sm">
-                    No patients yet.
-                  </td>
+                  <td colSpan={6} className="text-center text-stone-400 py-12 text-sm">No patients yet.</td>
                 </tr>
               ) : (
                 patients.map((p) => {
@@ -126,14 +109,9 @@ export default async function PatientListPage() {
                         {p.lastVisit.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                       </td>
                       <td className="px-6 py-4 text-sm text-stone-500">{p.totalVisits}</td>
-                      <td className="px-6 py-4">
-                        <Badge variant={variant}>{label}</Badge>
-                      </td>
+                      <td className="px-6 py-4"><Badge variant={variant}>{label}</Badge></td>
                       <td className="px-6 py-4 text-right">
-                        <a
-                          href={`/doctor/patient-list/${p.id}`}
-                          className="text-xs text-teal-700 hover:text-teal-900 font-medium"
-                        >
+                        <a href={`/doctor/patient-list/${p.id}`} className="text-xs text-teal-700 hover:text-teal-900 font-medium">
                           Open Chart →
                         </a>
                       </td>
