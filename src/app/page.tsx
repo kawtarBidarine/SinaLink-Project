@@ -52,7 +52,7 @@ export default function LandingPage() {
           <div>
             <div className="inline-flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-full px-4 py-1.5 text-xs text-teal-700 mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-              Now available in Morocco · سينالينك
+              Now available in Morocco
             </div>
             <h1 className="font-serif text-5xl text-stone-900 leading-tight mb-6">
               Healthcare that works

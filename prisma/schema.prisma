@@ -45,32 +45,34 @@ model Doctor {
   reviewCount    Int      @default(0)
   createdAt      DateTime @default(now())
 
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  appointments   Appointment[] @relation("DoctorAppointments")
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments   Appointment[]  @relation("DoctorAppointments")
   availability   Availability[]
+  reviews        Review[]
 }
 
 model Patient {
-  id          String   @id @default(cuid())
-  userId      String   @unique
+  id          String    @id @default(cuid())
+  userId      String    @unique
   dateOfBirth DateTime?
   bloodType   String?
   allergies   String[]
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   appointments Appointment[] @relation("PatientAppointments")
+  reviews      Review[]
 }
 
 model Appointment {
-  id          String            @id @default(cuid())
-  dateTime    DateTime
-  status      AppointmentStatus @default(PENDING)
-  reason      String
-  meetingLink String?
-  isTelehealth Boolean          @default(false)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id           String            @id @default(cuid())
+  dateTime     DateTime
+  status       AppointmentStatus @default(PENDING)
+  reason       String
+  meetingLink  String?
+  isTelehealth Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   doctorId    String
   patientId   String
@@ -92,16 +94,15 @@ model MedicalNote {
 }
 
 model Availability {
-  id        String   @id @default(cuid())
-  dayOfWeek Int      // 0 = Sunday, 6 = Saturday
-  startTime String   // "09:00"
-  endTime   String   // "17:00"
+  id        String @id @default(cuid())
+  dayOfWeek Int
+  startTime String
+  endTime   String
 
-  doctorId  String
-  doctor    Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  doctorId String
+  doctor   Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 }
 
-// NextAuth required models
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -135,4 +136,18 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  doctorId  String
+  patientId String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@unique([doctorId, patientId])
 }
