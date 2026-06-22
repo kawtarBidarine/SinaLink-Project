@@ -56,19 +56,45 @@ export async function POST(req: Request) {
   const body = await req.json();
   const parsed = appointmentSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid input", details: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const { doctorId, date, time, reason, isTelehealth } = parsed.data;
+
+  // Build datetime and validate it's in the future
+  const dateTime = new Date(`${date}T${time}:00`);
+  if (isNaN(dateTime.getTime())) {
+    return NextResponse.json({ error: "Invalid date or time" }, { status: 400 });
+  }
+  if (dateTime <= new Date()) {
+    return NextResponse.json(
+      { error: "Cannot book an appointment in the past" },
+      { status: 400 }
+    );
+  }
 
   const patient = await prisma.patient.findUnique({
     where: { userId: session.user.id },
   });
   if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 });
 
-  const [hour, minute] = time.split(":").map(Number);
-  const dateTime = new Date(date);
-  dateTime.setHours(hour, minute, 0, 0);
+  // Prevent double-booking same doctor at same time
+  const conflict = await prisma.appointment.findFirst({
+    where: {
+      doctorId,
+      dateTime,
+      status: { in: ["PENDING", "CONFIRMED"] },
+    },
+  });
+  if (conflict) {
+    return NextResponse.json(
+      { error: "This time slot is already booked" },
+      { status: 409 }
+    );
+  }
 
   const meetingLink = isTelehealth
     ? `https://meet.sinalink.com/${Math.random().toString(36).slice(2, 10)}`

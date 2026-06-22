@@ -30,7 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${dmSans.variable} ${dmSerif.variable}`}>
-      <body className="font-sans antialiased bg-stone-50 text-stone-900">
+      <body className="font-sans antialiased bg-stone-50 text-stone-900" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

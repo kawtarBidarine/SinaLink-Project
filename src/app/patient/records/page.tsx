@@ -3,6 +3,15 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/shared/Navbar";
 import { Badge } from "@/components/shared/Badge";
+import {
+  FileText,
+  Pill,
+  Droplet,
+  AlertTriangle,
+  Stethoscope,
+  CalendarCheck,
+  ChevronRight,
+} from "lucide-react";
 
 export const revalidate = 30;
 
@@ -27,6 +36,7 @@ export default async function PatientRecordsPage() {
   if (!patient) redirect("/auth/signup");
 
   const records = patient.appointments.filter((a) => a.medicalNote);
+  const prescriptionCount = records.filter((a) => a.medicalNote?.prescription).length;
   const hasNew = records.length > 0 && (() => {
     const latest = new Date(records[0].dateTime);
     const diffDays = (Date.now() - latest.getTime()) / (1000 * 60 * 60 * 24);
@@ -41,6 +51,37 @@ export default async function PatientRecordsPage() {
         <div className="mb-8">
           <h1 className="font-serif text-3xl text-stone-900">My Records</h1>
           <p className="text-stone-500 mt-1">Secure medical documents from your visits</p>
+        </div>
+
+        {/* Quick stats */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-white border border-stone-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-stone-400 uppercase tracking-wider">Total Visits</p>
+              <div className="p-1.5 bg-teal-50 rounded-lg">
+                <CalendarCheck size={14} className="text-teal-700" />
+              </div>
+            </div>
+            <p className="text-2xl font-medium text-stone-900">{patient.appointments.length}</p>
+          </div>
+          <div className="bg-white border border-stone-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-stone-400 uppercase tracking-wider">Documents</p>
+              <div className="p-1.5 bg-blue-50 rounded-lg">
+                <FileText size={14} className="text-blue-700" />
+              </div>
+            </div>
+            <p className="text-2xl font-medium text-stone-900">{records.length}</p>
+          </div>
+          <div className="bg-white border border-stone-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-stone-400 uppercase tracking-wider">Prescriptions</p>
+              <div className="p-1.5 bg-amber-50 rounded-lg">
+                <Pill size={14} className="text-amber-700" />
+              </div>
+            </div>
+            <p className="text-2xl font-medium text-stone-900">{prescriptionCount}</p>
+          </div>
         </div>
 
         {hasNew && (
@@ -63,22 +104,34 @@ export default async function PatientRecordsPage() {
             </h2>
           </div>
           {records.length === 0 ? (
-            <p className="text-center text-stone-400 py-12 text-sm">
-              No records yet. They will appear here after your consultations.
-            </p>
+            <div className="flex flex-col items-center text-center py-14 px-6">
+              <div className="p-3 bg-stone-50 rounded-full mb-3">
+                <FileText size={20} className="text-stone-300" />
+              </div>
+              <p className="text-sm text-stone-400">
+                No records yet. They will appear here after your consultations.
+              </p>
+            </div>
           ) : (
             <div className="divide-y divide-stone-50">
               {records.map((appt, idx) => {
                 const isNew = idx === 0 && hasNew;
                 return (
-                  <div key={appt.id} className="flex items-center gap-4 px-6 py-4 hover:bg-stone-50/50 transition-colors">
-                    <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-lg shrink-0">📋</div>
+                  <a
+                    key={appt.id}
+                    href={`/patient/records/${appt.id}`}
+                    className="flex items-center gap-4 px-6 py-4 hover:bg-stone-50/50 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+                      <FileText size={18} className="text-teal-700" />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-stone-900">Consultation Notes</p>
                         {isNew && <Badge variant="followup">New</Badge>}
                       </div>
-                      <p className="text-xs text-stone-400 mt-0.5">
+                      <p className="flex items-center gap-1 text-xs text-stone-400 mt-0.5">
+                        <Stethoscope size={11} />
                         Dr. {appt.doctor.user.name} · {appt.doctor.specialty}
                       </p>
                       <p className="text-xs text-stone-400">
@@ -90,10 +143,8 @@ export default async function PatientRecordsPage() {
                     {appt.medicalNote?.prescription && (
                       <Badge variant="confirmed">Prescription included</Badge>
                     )}
-                    <button className="ml-2 px-4 py-1.5 border border-stone-200 rounded-lg text-xs text-stone-600 hover:bg-stone-50 transition-colors">
-                      View
-                    </button>
-                  </div>
+                    <ChevronRight size={16} className="text-stone-300 shrink-0" />
+                  </a>
                 );
               })}
             </div>
@@ -104,17 +155,26 @@ export default async function PatientRecordsPage() {
           <h3 className="text-xs text-stone-400 uppercase tracking-wider mb-4">Health Summary</h3>
           <div className="grid grid-cols-3 gap-6">
             <div>
-              <p className="text-xs text-stone-400 mb-1">Blood Type</p>
+              <p className="flex items-center gap-1.5 text-xs text-stone-400 mb-1">
+                <Droplet size={12} />
+                Blood Type
+              </p>
               <p className="text-sm font-medium text-stone-900">{patient.bloodType ?? "Not recorded"}</p>
             </div>
             <div>
-              <p className="text-xs text-stone-400 mb-1">Allergies</p>
+              <p className="flex items-center gap-1.5 text-xs text-stone-400 mb-1">
+                <AlertTriangle size={12} />
+                Allergies
+              </p>
               <p className="text-sm font-medium text-stone-900">
                 {patient.allergies.length ? patient.allergies.join(", ") : "None on record"}
               </p>
             </div>
             <div>
-              <p className="text-xs text-stone-400 mb-1">Total Visits</p>
+              <p className="flex items-center gap-1.5 text-xs text-stone-400 mb-1">
+                <CalendarCheck size={12} />
+                Total Visits
+              </p>
               <p className="text-sm font-medium text-stone-900">{patient.appointments.length}</p>
             </div>
           </div>

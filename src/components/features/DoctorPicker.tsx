@@ -75,6 +75,7 @@ export function DoctorPicker({ onBooked }: { onBooked?: () => void }) {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [bookingDoctor, setBookingDoctor] = useState<DoctorItem | null>(null);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -89,13 +90,29 @@ export function DoctorPicker({ onBooked }: { onBooked?: () => void }) {
   );
 
   const handleConfirm = async (data: AppointmentFormData) => {
-    const res = await fetch("/api/appointments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
+    setBookingError(null);
+    try {
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const message =
+          body?.details?.fieldErrors?.reason?.[0] ??
+          body?.error ??
+          "Something went wrong while booking. Please try again.";
+        setBookingError(message);
+        return; // keep modal open so the user can fix the input
+      }
+
+      setBookingError(null);
+      setBookingDoctor(null);
       onBooked?.();
+    } catch {
+      setBookingError("Network error — please check your connection and try again.");
     }
   };
 
@@ -208,7 +225,10 @@ export function DoctorPicker({ onBooked }: { onBooked?: () => void }) {
                 )}
 
                 <button
-                  onClick={() => setBookingDoctor(doc)}
+                  onClick={() => {
+                    setBookingError(null);
+                    setBookingDoctor(doc);
+                  }}
                   className="mt-4 flex items-center justify-center gap-2 w-full bg-teal-700 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-teal-800 transition-colors"
                 >
                   <CalendarPlus size={15} />
@@ -224,7 +244,11 @@ export function DoctorPicker({ onBooked }: { onBooked?: () => void }) {
         <AppointmentModal
           doctorId={bookingDoctor.id}
           doctorName={bookingDoctor.user.name}
-          onClose={() => setBookingDoctor(null)}
+          errorMessage={bookingError}
+          onClose={() => {
+            setBookingDoctor(null);
+            setBookingError(null);
+          }}
           onConfirm={handleConfirm}
         />
       )}

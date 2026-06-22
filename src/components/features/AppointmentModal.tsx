@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AppointmentModalProps {
   doctorId: string;
   doctorName: string;
+  errorMessage?: string | null;
   onClose: () => void;
   onConfirm: (data: AppointmentFormData) => Promise<void>;
 }
@@ -27,6 +28,7 @@ const TIME_SLOTS = [
 export function AppointmentModal({
   doctorId,
   doctorName,
+  errorMessage,
   onClose,
   onConfirm,
 }: AppointmentModalProps) {
@@ -43,7 +45,8 @@ export function AppointmentModal({
     setLoading(true);
     try {
       await onConfirm({ doctorId, date, time, reason, isTelehealth });
-      onClose();
+      // onConfirm is responsible for closing the modal on success
+      // (it stays open if there was an error, so the user can fix the input)
     } finally {
       setLoading(false);
     }
@@ -64,6 +67,13 @@ export function AppointmentModal({
         </div>
 
         <div className="p-6 space-y-5">
+          {errorMessage && (
+            <div className="flex items-start gap-2.5 bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl px-4 py-3">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Consultation type */}
           <div className="flex rounded-xl overflow-hidden border border-stone-200">
             <button
@@ -125,7 +135,7 @@ export function AppointmentModal({
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Briefly describe your symptoms or reason..."
+              placeholder="Briefly describe your symptoms or reason... (min. 5 characters)"
               rows={3}
               className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-teal-200 resize-none"
             />

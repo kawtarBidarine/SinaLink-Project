@@ -4,6 +4,20 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/shared/Navbar";
 import { ConsultationNotes } from "@/components/features/ConsultationNotes";
 import { Badge } from "@/components/shared/Badge";
+import {
+  ArrowLeft,
+  Mic,
+  Video,
+  PhoneOff,
+  Cake,
+  Droplet,
+  AlertTriangle,
+  CalendarClock,
+  ClipboardList,
+  History,
+  FileText,
+  CircleDot,
+} from "lucide-react";
 
 interface ConsultationPageProps {
   params: Promise<{ id: string }>;
@@ -50,6 +64,19 @@ export default async function ConsultationPage({ params }: ConsultationPageProps
   const patient = appointment.patient;
   const initials = patient.user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
+  const summaryItems = [
+    { label: "Date of Birth", icon: Cake, value: patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString("en-GB") : "—" },
+    { label: "Blood Type", icon: Droplet, value: patient.bloodType ?? "—" },
+    { label: "Allergies", icon: AlertTriangle, value: patient.allergies.length ? patient.allergies.join(", ") : "None on record" },
+    { label: "Appointment", icon: CalendarClock, value: new Date(appointment.dateTime).toLocaleDateString("en-GB", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) },
+  ];
+
+  const VIDEO_CONTROLS = [
+    { icon: Mic, label: "Mute", bg: "bg-white/20" },
+    { icon: Video, label: "Camera", bg: "bg-white/20" },
+    { icon: PhoneOff, label: "End call", bg: "bg-red-600" },
+  ];
+
   return (
     <div className="min-h-screen bg-stone-50">
       <Navbar currentPath="/doctor/patient-list" />
@@ -57,8 +84,9 @@ export default async function ConsultationPage({ params }: ConsultationPageProps
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <a href="/doctor/patient-list" className="text-xs text-stone-400 hover:text-stone-600 mb-1 block">
-              ← Back to patients
+            <a href="/doctor/patient-list" className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 mb-1">
+              <ArrowLeft size={12} />
+              Back to patients
             </a>
             <h1 className="font-serif text-2xl text-stone-900">
               Consultation — {patient.user.name}
@@ -83,8 +111,8 @@ export default async function ConsultationPage({ params }: ConsultationPageProps
 
               {/* Live indicator */}
               <div className="absolute top-4 left-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-white text-xs font-medium">LIVE</span>
+                <CircleDot size={12} className="text-red-500 animate-pulse" />
+                <span className="text-white text-xs font-medium tracking-wide">LIVE</span>
               </div>
 
               {/* Self-view thumbnail */}
@@ -94,17 +122,13 @@ export default async function ConsultationPage({ params }: ConsultationPageProps
 
               {/* Video controls */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                {[
-                  { icon: "🎤", label: "Mute", bg: "bg-white/20" },
-                  { icon: "📷", label: "Camera", bg: "bg-white/20" },
-                  { icon: "✕", label: "End call", bg: "bg-red-600" },
-                ].map((btn) => (
+                {VIDEO_CONTROLS.map((btn) => (
                   <button
                     key={btn.label}
-                    className={`w-9 h-9 rounded-full ${btn.bg} flex items-center justify-center text-white text-sm hover:opacity-80 transition-opacity`}
+                    className={`w-9 h-9 rounded-full ${btn.bg} flex items-center justify-center text-white hover:opacity-80 transition-opacity`}
                     title={btn.label}
                   >
-                    {btn.icon}
+                    <btn.icon size={15} />
                   </button>
                 ))}
               </div>
@@ -112,16 +136,17 @@ export default async function ConsultationPage({ params }: ConsultationPageProps
 
             {/* Patient summary card */}
             <div className="bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
-              <h3 className="text-xs text-stone-400 uppercase tracking-wider">Patient Summary</h3>
+              <h3 className="flex items-center gap-1.5 text-xs text-stone-400 uppercase tracking-wider">
+                <ClipboardList size={13} />
+                Patient Summary
+              </h3>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                {[
-                  { label: "Date of Birth", value: patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString("en-GB") : "—" },
-                  { label: "Blood Type", value: patient.bloodType ?? "—" },
-                  { label: "Allergies", value: patient.allergies.length ? patient.allergies.join(", ") : "None on record" },
-                  { label: "Appointment", value: new Date(appointment.dateTime).toLocaleDateString("en-GB", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) },
-                ].map((item) => (
+                {summaryItems.map((item) => (
                   <div key={item.label}>
-                    <p className="text-xs text-stone-400 mb-0.5">{item.label}</p>
+                    <p className="flex items-center gap-1.5 text-xs text-stone-400 mb-0.5">
+                      <item.icon size={11} />
+                      {item.label}
+                    </p>
                     <p className="text-sm text-stone-800">{item.value}</p>
                   </div>
                 ))}
@@ -135,7 +160,10 @@ export default async function ConsultationPage({ params }: ConsultationPageProps
 
             {/* Visit history */}
             <div className="bg-white border border-stone-200 rounded-2xl p-5">
-              <h3 className="text-xs text-stone-400 uppercase tracking-wider mb-3">Visit History</h3>
+              <h3 className="flex items-center gap-1.5 text-xs text-stone-400 uppercase tracking-wider mb-3">
+                <History size={13} />
+                Visit History
+              </h3>
               <div className="space-y-2">
                 {patient.appointments
                   .filter((a) => a.id !== appointment.id)
@@ -145,7 +173,8 @@ export default async function ConsultationPage({ params }: ConsultationPageProps
                       <span className="text-stone-600">
                         {new Date(a.dateTime).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                       </span>
-                      <span className="text-xs text-stone-400 truncate max-w-[120px]">
+                      <span className="flex items-center gap-1 text-xs text-stone-400 truncate max-w-[120px]">
+                        <FileText size={11} className="shrink-0" />
                         {a.medicalNote ? "Notes available" : "No notes"}
                       </span>
                       <Badge variant={a.status === "COMPLETED" ? "completed" : "pending"}>
